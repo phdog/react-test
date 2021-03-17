@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { useHistory, useRouteMatch } from 'react-router'
 import { sortableContainer, sortableElement } from 'react-sortable-hoc'
-
+import path from 'ramda/es/path'
+import pathOr from 'ramda/es/pathOr'
+import findIndex from 'ramda/es/findIndex'
+import propEq from 'ramda/es/propEq'
 import { useQuery } from '@apollo/client'
 import arrayMove from 'array-move'
 
 import postQuery from 'GraphQL/Queries/post.graphql'
-
-import { ROOT } from 'Router/routes'
+import postsQuery from 'GraphQL/Queries/posts.graphql'
+import { ROOT, POST } from 'Router/routes'
 
 import {
   Back,
@@ -37,15 +40,24 @@ function Post() {
   const handleClick = () => history.push(ROOT)
 
   const handleSortEnd = ({ oldIndex, newIndex }) => {
-    setComments(arrayMove(comments, newIndex, oldIndex))
+    setComments(arrayMove(comments, oldIndex, newIndex,))
   }
 
-  const { data, loading } = useQuery(postQuery, { variables: { id: postId } })
+  const { data, loading } = useQuery(postQuery, { variables: { id: postId }})
+  const posts = pathOr([], ['data', 'posts', 'data'], useQuery(postsQuery))
 
-  const post = data?.post || {}
+  const post = data?.post
+
+  const handleSkip = (direction) => (e) => {
+    const idx = findIndex(propEq('id', postId), posts)
+    const newId = path([idx + direction, 'id'], posts)
+    if (newId) {
+      history.push(POST(newId));
+    }    
+  }
 
   useEffect(() => {
-    setComments(post.comments?.data || [])
+    setComments(post?.comments?.data || [])
   }, [post])
 
   return (
@@ -64,7 +76,11 @@ function Post() {
               <PostAuthor>by {post.user.name}</PostAuthor>
               <PostBody mt={2}>{post.body}</PostBody>
             </PostContainer>
-            <div>Next/prev here</div>
+            <div>
+              <span onClick={handleSkip(-1)}>Prev</span>
+              <span> | </span>
+              <span onClick={handleSkip(1)}>Next</span>
+            </div>
           </Column>
 
           <Column>

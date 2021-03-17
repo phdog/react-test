@@ -4,6 +4,9 @@ import { NavLink } from 'react-router-dom'
 import { useQuery } from '@apollo/client'
 import faker from 'faker'
 import { nanoid } from 'nanoid'
+import pathOr from 'ramda/es/pathOr'
+import times from 'ramda/es/times'
+import inc from 'ramda/es/inc'
 
 import postsQuery from 'GraphQL/Queries/posts.graphql'
 
@@ -23,19 +26,26 @@ function Root() {
   ])
 
   const [value, setValue] = useState('')
-  const { data, loading } = useQuery(postsQuery)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const { data, loading } = useQuery(postsQuery, {variables: {page, limit}})
 
   function handlePush() {
     setFields([{ name: faker.name.findName(), id: nanoid() }, ...fields])
   }
 
-  function handleAlertClick() {
+  const handleAlertClick = () => {
     setTimeout(() => {
       alert(`You clicked ${count} times`)
     }, 2500)
   }
 
+  const handleChange = (e) => {
+    setValue(e.target.value)
+  }
+
   const posts = data?.posts.data || []
+  const totalCount = pathOr(limit, ['posts', 'meta', 'totalCount'], data)
 
   return (
     <Container>
@@ -44,7 +54,7 @@ function Root() {
         {loading
           ? 'Loading...'
           : posts.map(post => (
-              <Post mx={4}>
+              <Post mx={4} key={post.id}>
                 <NavLink href={POST(post.id)} to={POST(post.id)}>
                   {post.title}
                 </NavLink>
@@ -52,7 +62,11 @@ function Root() {
                 <PostBody>{post.body}</PostBody>
               </Post>
             ))}
-        <div>Pagination here</div>
+        <div>
+          {times(inc, totalCount / limit).map((v) => 
+            (<span onClick={() => setPage(v)}> {Number(v) === page ? <strong>{v}</strong> : <small>{v}</small>} </span>)
+          )}
+        </div>
       </Column>
       <Column>
         <h4>Slow rendering</h4>
@@ -61,7 +75,7 @@ function Root() {
           <br />
           <input
             value={value}
-            onChange={({ target }) => setValue(target.value)}
+            onChange={handleChange}
           />
         </label>
         <p>So slow...</p>
@@ -84,7 +98,7 @@ function Root() {
         </button>
         <ol>
           {fields.map((field, index) => (
-            <li key={index}>
+            <li key={field.id}>
               {field.name}:<br />
               <input type="text" />
             </li>

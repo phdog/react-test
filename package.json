@@ -33,6 +33,7 @@
     "luxon": "1.26.0",
     "nanoid": "3.1.20",
     "prop-types": "15.7.2",
+    "ramda": "^0.27.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-router": "5.2.0",
@@ -43,7 +44,7 @@
     "storeon": "3.1.4",
     "styled-components": "5.2.1",
     "styled-normalize": "8.0.7",
-    "webpack": "5.24.3"
+    "webpack": "4.44.2"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "7.13.0",
